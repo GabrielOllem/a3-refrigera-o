@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Plano de Aula - Refrigeração e Ar Condicionado</title>
+</head>
+<body>
+    <h1>Gerador de Planos de Aula</h1>
+
+    <form id="formulario">
+        <label>Digite um tema:</label><br>
+        <input type="text" id="pergunta" placeholder="Ex: Ciclo de refrigeração" style="width: 300px;">
+        <br><br>
+        <button type="submit">Gerar Plano de Aula</button>
+    </form>
+
+    <h3>Resultado:</h3>
+    <pre id="resultado"></pre>
+
+    <script>
+        const form = document.getElementById("formulario");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const pergunta = document.getElementById("pergunta").value;
+
+            const response = await fetch("/chat", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ pergunta })
+            });
+
+            const data = await response.json();
+            document.getElementById("resultado").innerText = data.resposta;
+        });
+    </script>
+</body>
+</html>
