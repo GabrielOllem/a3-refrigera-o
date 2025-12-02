@@ -1,38 +1,161 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-    <meta charset="UTF-8" />
-    <title>Plano de Aula - Refrigeração e Ar Condicionado</title>
+    <meta charset="UTF-8">
+    <title>Gerador de Plano de Aula - UNISUL</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
-    <h1>Gerador de Planos de Aula</h1>
 
-    <form id="formulario">
-        <label>Digite um tema:</label><br>
-        <input type="text" id="pergunta" placeholder="Ex: Ciclo de refrigeração" style="width: 300px;">
-        <br><br>
-        <button type="submit">Gerar Plano de Aula</button>
-    </form>
+<header>
+    <img src="/static/unisul.png" class="logo">
+    <div>
+        <h2>Gerador de Plano de Aula</h2>
+        <small>Refrigeração e Ar Condicionado</small>
+    </div>
+</header>
 
-    <h3>Resultado:</h3>
-    <pre id="resultado"></pre>
+<div class="conteudo">
 
-    <script>
-        const form = document.getElementById("formulario");
+    <div class="secao">
+        <h3>Tema da aula</h3>
+        <input id="pergunta" placeholder="Digite qualquer tema...">
+    </div>
 
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const pergunta = document.getElementById("pergunta").value;
+    <div class="secao">
+        <h3>Temas sugeridos</h3>
+        <div class="grid-temas">
+            <button class="tema-btn" onclick="setTema('Ciclo de Refrigeração')">Ciclo de Refrigeração</button>
+            <button class="tema-btn" onclick="setTema('Evaporador')">Evaporador</button>
+            <button class="tema-btn" onclick="setTema('Condensador')">Condensador</button>
+            <button class="tema-btn" onclick="setTema('Compressor')">Compressor</button>
+            <button class="tema-btn" onclick="setTema('Válvula de Expansão')">Válvula de Expansão</button>
+            <button class="tema-btn" onclick="setTema('Refrigerantes')">Refrigerantes</button>
+        </div>
+    </div>
 
-            const response = await fetch("/chat", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ pergunta })
-            });
+    <button class="gerar" id="btnGerar">Gerar Plano de Aula</button>
 
-            const data = await response.json();
-            document.getElementById("resultado").innerText = data.resposta;
+    <p id="loading" class="loading">Gerando plano... aguarde</p>
+
+    <div class="secao">
+        <!-- AGORA É EDITÁVEL -->
+        <div id="resultado" class="editable" contenteditable="true"></div>
+    </div>
+
+    <div class="acoes">
+    <button class="copiar hidden" id="copiar">Copiar</button>
+    <button class="pdf-btn hidden" id="pdf-btn">Gerar PDF</button>
+    <button class="ppt-btn hidden" id="ppt-btn">Gerar Slides PPTX</button>
+
+</div>
+
+
+</div>
+
+<footer>
+    Desenvolvido para UNISUL • Projeto A3
+</footer>
+
+<script>
+const gerarBtn = document.getElementById("btnGerar");
+const copiarBtn = document.getElementById("copiar");
+const pdfBtn = document.getElementById("pdf-btn");
+const resultado = document.getElementById("resultado");
+const loading = document.getElementById("loading");
+const pptBtn = document.getElementById("ppt-btn"); // <-- adicionamos aqui
+
+function setTema(t) {
+    document.getElementById("pergunta").value = t;
+}
+
+gerarBtn.addEventListener("click", async () => {
+    const pergunta = document.getElementById("pergunta").value.trim();
+    if (!pergunta) return alert("Digite um tema!");
+
+    resultado.innerHTML = "";
+    loading.style.display = "block";
+    copiarBtn.classList.add("hidden");
+    pdfBtn.classList.add("hidden");
+    pptBtn.classList.add("hidden"); // <-- também oculta no início
+
+    const response = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pergunta })
+    });
+
+    const data = await response.json();
+    loading.style.display = "none";
+
+    resultado.innerText = data.resposta;
+    copiarBtn.classList.remove("hidden");
+    pdfBtn.classList.remove("hidden");
+    pptBtn.classList.remove("hidden"); // <-- mostra depois de gerar
+});
+
+copiarBtn.addEventListener("click", () => {
+    navigator.clipboard.writeText(resultado.innerText);
+    copiarBtn.innerText = "Copiado!";
+    setTimeout(() => copiarBtn.innerText = "Copiar", 1200);
+});
+
+pdfBtn.addEventListener("click", async () => {
+    const pergunta = document.getElementById("pergunta").value.trim();
+    const conteudo = resultado.innerText.trim();
+
+    if (!conteudo) return alert("Clique em gerar plano antes!");
+
+    try {
+        const response = await fetch("/pdf", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pergunta, conteudo })
         });
-    </script>
+
+        if (!response.ok) return alert("Erro ao gerar PDF");
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "Plano-de-Aula-UNISUL.pdf";
+        link.click();
+        URL.revokeObjectURL(url);
+
+    } catch (err) {
+        alert("Erro ao gerar PDF :(");
+    }
+});
+
+// 👉 **AQUI ESTÁ O BLOCO NOVO**
+pptBtn.addEventListener("click", async () => {
+    const pergunta = document.getElementById("pergunta").value.trim();
+    const conteudo = resultado.innerText.trim();
+
+    if (!conteudo) return alert("Clique em Gerar Plano antes!");
+
+    const response = await fetch("/ppt", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ pergunta, conteudo })
+    });
+
+    if (!response.ok) return alert("Erro ao gerar Slides PPTX 😢");
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "Slides-UNISUL.pptx";
+    link.click();
+    URL.revokeObjectURL(url);
+});
+</script>
+
+
 </body>
 </html>
