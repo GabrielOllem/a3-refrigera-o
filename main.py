@@ -55,13 +55,12 @@ def gerar_plano(texto_tema: str) -> str:
     """
 
     resposta = client.chat.completions.create(
-    model="llama-3.1-8b-instant",
-    messages=[{"role": "user", "content": prompt}]
-)
-
-
+        model="llama-3.1-8b-instant",
+        messages=[{"role": "user", "content": prompt}]
+    )
 
     return resposta.choices[0].message.content
+
 
 
 @app.post("/chat")
