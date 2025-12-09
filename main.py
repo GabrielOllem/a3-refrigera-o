@@ -55,9 +55,10 @@ def gerar_plano(texto_tema: str) -> str:
     """
 
     resposta = client.chat.completions.create(
-    model="llama3-8b-8192",
+    model="llama3-8b",
     messages=[{"role": "user", "content": prompt}]
 )
+
 
     return resposta.choices[0].message.content
 
